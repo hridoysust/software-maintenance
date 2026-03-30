@@ -1,14 +1,13 @@
 from tkinter import*
-from PIL import Image,ImageTk
+from PIL import Image
 from tkinter import ttk,messagebox
-import sqlite3
 import time
 import os
 import tempfile
 
 from database import Database
 
-class billClass:
+class BillingUI:
     def __init__(self,root):
         self.root=root
         self.root.geometry("1350x700+110+80")
@@ -16,6 +15,8 @@ class billClass:
         self.root.config(bg="white")
         self.cart_list=[]
         self.chk_print=0
+        self.db = Database()
+        self.DISCOUNT_RATE = 5
 
         #------------- title --------------
         self.icon_title=PhotoImage(file="images/logo1.png")
@@ -222,9 +223,8 @@ class billClass:
         self.var_cal_input.set(eval(result))
 
     def show(self):
-        db = Database()
         try:
-            rows = db.fetch("SELECT pid,name,price,qty,status FROM product WHERE status='Active'")
+            rows = self.db.fetch("SELECT pid,name,price,qty,status FROM product WHERE status='Active'")
             self.product_Table.delete(*self.product_Table.get_children())
             for row in rows:
                 self.product_Table.insert('',END,values=row)
@@ -232,14 +232,13 @@ class billClass:
             messagebox.showerror("Error",f"Error due to : {str(ex)}")
 
     def search(self):
-        db = Database()
         try:
             if self.var_search.get()=="":
                 messagebox.showerror("Error","Search input should be required",parent=self.root)
             else:
                 query = "SELECT pid,name,price,qty,status FROM product WHERE name LIKE ?"
                 value = f"%{self.var_search.get()}%"
-                rows = db.fetch(query, (value,))
+                rows = self.db.fetch(query, (value,))
                 if len(rows)!=0:
                     self.product_Table.delete(*self.product_Table.get_children())
                     for row in rows:
@@ -248,6 +247,7 @@ class billClass:
                     messagebox.showerror("Error","No record found!!!",parent=self.root)
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}")
+
 
     def get_data(self,ev):
         f=self.product_Table.focus()
@@ -306,7 +306,7 @@ class billClass:
 
     def bill_update(self):
         self.bill_amnt = self.calculate_total()
-        self.discount = (self.bill_amnt * 5) / 100
+        self.discount = (self.bill_amnt * self.DISCOUNT_RATE) / 100
         self.net_pay = self.bill_amnt - self.discount
         self.lbl_amnt.config(text=f"Bill Amnt\n{str(self.bill_amnt)}")
         self.lbl_net_pay.config(text=f"Net Pay\n{str(self.net_pay)}")
@@ -372,7 +372,6 @@ class billClass:
         return total
     
     def bill_middle(self):
-        db = Database()
         try:
             for row in self.cart_list:
                 pid=row[0]
@@ -382,15 +381,15 @@ class billClass:
                 status="Inactive" if int(row[3])==int(row[4]) else "Active"
                 price=float(row[2])*int(row[3])
                 self.txt_bill_area.insert(END,"\n "+name+"\t\t\t"+row[3]+"\tRs."+str(price))
-                #------------- update qty in product table --------------
-                db.execute("update product set qty=?,status=? where pid=?",(
-                    qty,
-                    status,
-                    pid
-                ))
+
+                self.db.execute(
+                    "update product set qty=?,status=? where pid=?",
+                    (qty, status, pid)
+                )
             self.show()
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)
+
 
     def clear_cart(self):
         self.var_pid.set("")
@@ -429,5 +428,5 @@ class billClass:
 
 if __name__=="__main__":
     root=Tk()
-    obj=billClass(root)
+    obj=BillingUI(root)
     root.mainloop()

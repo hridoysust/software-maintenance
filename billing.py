@@ -6,6 +6,8 @@ import time
 import os
 import tempfile
 
+from database import Database
+
 class billClass:
     def __init__(self,root):
         self.root=root
@@ -220,11 +222,9 @@ class billClass:
         self.var_cal_input.set(eval(result))
 
     def show(self):
-        con=sqlite3.connect(database=r'ims.db')
-        cur=con.cursor()
+        db = Database()
         try:
-            cur.execute("select pid,name,price,qty,status from product where status='Active'")
-            rows=cur.fetchall()
+            rows = db.fetch("SELECT pid,name,price,qty,status FROM product WHERE status='Active'")
             self.product_Table.delete(*self.product_Table.get_children())
             for row in rows:
                 self.product_Table.insert('',END,values=row)
@@ -232,14 +232,14 @@ class billClass:
             messagebox.showerror("Error",f"Error due to : {str(ex)}")
 
     def search(self):
-        con=sqlite3.connect(database=r'ims.db')
-        cur=con.cursor()
+        db = Database()
         try:
             if self.var_search.get()=="":
                 messagebox.showerror("Error","Search input should be required",parent=self.root)
             else:
-                cur.execute("select pid,name,price,qty,status from product where name LIKE '%"+self.var_search.get()+"%'")
-                rows=cur.fetchall()
+                query = "SELECT pid,name,price,qty,status FROM product WHERE name LIKE ?"
+                value = f"%{self.var_search.get()}%"
+                rows = db.fetch(query, (value,))
                 if len(rows)!=0:
                     self.product_Table.delete(*self.product_Table.get_children())
                     for row in rows:
@@ -305,13 +305,9 @@ class billClass:
             self.bill_update()
 
     def bill_update(self):
-        self.bill_amnt=0
-        self.net_pay=0
-        self.siscount=0
-        for row in self.cart_list:
-            self.bill_amnt=self.bill_amnt+(float(row[2])*int(row[3]))
-        self.discount=(self.bill_amnt*5)/100
-        self.net_pay=self.bill_amnt-self.discount
+        self.bill_amnt = self.calculate_total()
+        self.discount = (self.bill_amnt * 5) / 100
+        self.net_pay = self.bill_amnt - self.discount
         self.lbl_amnt.config(text=f"Bill Amnt\n{str(self.bill_amnt)}")
         self.lbl_net_pay.config(text=f"Net Pay\n{str(self.net_pay)}")
         self.cartTitle.config(text=f"Cart \t Total Products: [{str(len(self.cart_list))}]")
@@ -369,29 +365,29 @@ class billClass:
 '''
         self.txt_bill_area.insert(END,bill_bottom_temp)
 
+    def calculate_total(self):
+        total = 0
+        for row in self.cart_list:
+            total += float(row[2]) * int(row[3])
+        return total
+    
     def bill_middle(self):
-        con=sqlite3.connect(database=r'ims.db')
-        cur=con.cursor()
+        db = Database()
         try:
             for row in self.cart_list:
                 pid=row[0]
                 name=row[1]
                 qty=int(row[4])-int(row[3])
-                if int(row[3])==int(row[4]):
-                    status="Inactive"
-                if int(row[3])!=int(row[4]):
-                    status="Active"
+
+                status="Inactive" if int(row[3])==int(row[4]) else "Active"
                 price=float(row[2])*int(row[3])
-                price=str(price)
-                self.txt_bill_area.insert(END,"\n "+name+"\t\t\t"+row[3]+"\tRs."+price)
+                self.txt_bill_area.insert(END,"\n "+name+"\t\t\t"+row[3]+"\tRs."+str(price))
                 #------------- update qty in product table --------------
-                cur.execute("update product set qty=?,status=? where pid=?",(
+                db.execute("update product set qty=?,status=? where pid=?",(
                     qty,
                     status,
                     pid
                 ))
-                con.commit()
-            con.close()
             self.show()
         except Exception as ex:
             messagebox.showerror("Error",f"Error due to : {str(ex)}",parent=self.root)

@@ -1,14 +1,17 @@
+import sqlite3
+
 class Database:
+    def __init__(self, db_name="ims.db"):
+        self.db_name = db_name
+
     def connect(self):
-        import sqlite3
-        return sqlite3.connect("ims.db")
+        return sqlite3.connect(self.db_name)
 
     def execute(self, query, params=()):
-        conn = self.connect()
-        cur = conn.cursor()
-        cur.execute(query, params)
-        conn.commit()
-        conn.close()
+        with self.connect() as conn:
+            cur = conn.cursor()
+            cur.execute(query, params)
+            conn.commit()
 
     def fetch(self, query, params=()):
         conn = self.connect()

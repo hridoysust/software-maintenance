@@ -88,24 +88,22 @@ Ensure that you have the following Python Pakages installed in your PC:
 - In `images` folder save your images regarding this project and in `bill` folder bills will automatically be saved.
 
 
-### Update - 30April
-# Python cache
-__pycache__/
-*.pyc
+### Update - April30
+## Features
+- Product management
+- Supplier & category management
+- Billing system
+- Low stock alert system
 
-# Test database
-test.db
+## New Feature (T3)
+- Low stock alert added when product quantity is below threshold
 
-# System files
-.DS_Store
-Thumbs.db
+## Testing (T4)
+This project includes:
+- Unit Tests
+- Integration Tests
+- Regression Tests
 
-# Virtual environment (if any)
-venv/
-env/
+## Run Tests
 
-# Logs
-*.log
-
-# Temporary files
-*.tmp
+Run all tests:

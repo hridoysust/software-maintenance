@@ -1,7 +1,8 @@
 from tkinter import*
 from PIL import Image,ImageTk
 from tkinter import ttk,messagebox
-import sqlite3
+
+from database import Database
 
 class categoryClass:
     def __init__(self,root):
@@ -14,6 +15,8 @@ class categoryClass:
         #------------ variables -------------
         self.var_cat_id=StringVar()
         self.var_name=StringVar()
+        self.db = Database()
+
         #--------------- title ---------------------
         lbl_title=Label(self.root,text="Manage Product Category",font=("goudy old style",30),bg="#184a45",fg="white",bd=3,relief=RIDGE).pack(side=TOP,fill=X,padx=10,pady=20)
         
@@ -59,21 +62,15 @@ class categoryClass:
         self.lbl_im2.place(x=580,y=220)
 #----------------------------------------------------------------------------------
     def add(self):
-        con=sqlite3.connect(database=r'ims.db')
-        cur=con.cursor()
         try:
             if self.var_name.get()=="":
-                messagebox.showerror("Error","Category Name must be required",parent=self.root)
+                messagebox.showerror("Error","Category Name required",parent=self.root)
             else:
-                cur.execute("Select * from category where name=?",(self.var_name.get(),))
-                row=cur.fetchone()
-                if row!=None:
-                    messagebox.showerror("Error","Category already present",parent=self.root)
+                row = self.db.fetch("SELECT * FROM category WHERE name=?", (self.var_name.get(),))
+                if row:
+                    messagebox.showerror("Error","Category already exists",parent=self.root)
                 else:
-                    cur.execute("insert into category(name) values(?)",(
-                        self.var_name.get(),
-                    ))
-                    con.commit()
+                    self.db.execute("INSERT INTO category(name) VALUES(?)", (self.var_name.get(),))
                     messagebox.showinfo("Success","Category Added Successfully",parent=self.root)
                     self.clear()
                     self.show()
@@ -81,11 +78,8 @@ class categoryClass:
             messagebox.showerror("Error",f"Error due to : {str(ex)}")
 
     def show(self):
-        con=sqlite3.connect(database=r'ims.db')
-        cur=con.cursor()
         try:
-            cur.execute("select * from category")
-            rows=cur.fetchall()
+            rows = self.db.fetch("SELECT * FROM category")
             self.CategoryTable.delete(*self.CategoryTable.get_children())
             for row in rows:
                 self.CategoryTable.insert('',END,values=row)
@@ -105,21 +99,17 @@ class categoryClass:
         self.var_name.set(row[1])
     
     def delete(self):
-        con=sqlite3.connect(database=r'ims.db')
-        cur=con.cursor()
         try:
             if self.var_cat_id.get()=="":
                 messagebox.showerror("Error","Category name must be required",parent=self.root)
             else:
-                cur.execute("Select * from category where cid=?",(self.var_cat_id.get(),))
-                row=cur.fetchone()
-                if row==None:
+                row = self.db.fetch("SELECT * FROM category WHERE cid=?", (self.var_cat_id.get(),))
+                if not row:
                     messagebox.showerror("Error","Invalid Category Name",parent=self.root)
                 else:
                     op=messagebox.askyesno("Confirm","Do you really want to delete?",parent=self.root)
                     if op==True:
-                        cur.execute("delete from category where cid=?",(self.var_cat_id.get(),))
-                        con.commit()
+                        self.db.execute("DELETE FROM category WHERE cid=?", (self.var_cat_id.get(),))
                         messagebox.showinfo("Delete","Category Deleted Successfully",parent=self.root)
                         self.clear()
                         self.var_cat_id.set("")

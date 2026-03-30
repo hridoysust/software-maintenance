@@ -4,7 +4,7 @@ from tkinter import ttk,messagebox
 
 from database import Database
 
-class categoryClass:
+class categoryUI:
     def __init__(self,root):
         self.root=root
         self.root.geometry("1100x500+320+220")
@@ -49,13 +49,13 @@ class categoryClass:
         self.show()
 
         #----------------- images ---------------------
-        self.im1=Image.open("Inventory-Management-System/images/cat.jpg")
+        self.im1=Image.open("images/cat.jpg")
         self.im1=self.im1.resize((500,250))
         self.im1=ImageTk.PhotoImage(self.im1)
         self.lbl_im1=Label(self.root,image=self.im1,bd=2,relief=RAISED)
         self.lbl_im1.place(x=50,y=220)
 
-        self.im2=Image.open("Inventory-Management-System/images/category.jpg")
+        self.im2=Image.open("images/category.jpg")
         self.im2=self.im2.resize((500,250))
         self.im2=ImageTk.PhotoImage(self.im2)
         self.lbl_im2=Label(self.root,image=self.im2,bd=2,relief=RAISED)
@@ -89,7 +89,7 @@ class categoryClass:
     
     def clear(self):
         self.var_name.set("")
-        self.show()
+        self.var_cat_id.set("")
 
     def get_data(self,ev):
         f=self.CategoryTable.focus()
@@ -101,7 +101,7 @@ class categoryClass:
     def delete(self):
         try:
             if self.var_cat_id.get()=="":
-                messagebox.showerror("Error","Category name must be required",parent=self.root)
+                messagebox.showerror("Error","Please select a category to delete",parent=self.root)
             else:
                 row = self.db.fetch("SELECT * FROM category WHERE cid=?", (self.var_cat_id.get(),))
                 if not row:
@@ -121,5 +121,5 @@ class categoryClass:
 
 if __name__=="__main__":
     root=Tk()
-    obj=categoryClass(root)
+    obj=categoryUI(root)
     root.mainloop()

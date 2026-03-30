@@ -5,7 +5,7 @@ from PIL import Image,ImageTk
 from tkinter import ttk,messagebox
 import sqlite3
 
-class employeeClass:
+class employeeUI:
     def __init__(self,root):
         self.root=root
         self.root.geometry("1100x500+320+220")
@@ -289,5 +289,5 @@ class employeeClass:
 
 if __name__=="__main__":
     root=Tk()
-    obj=employeeClass(root)
+    obj=employeeUI(root)
     root.mainloop()

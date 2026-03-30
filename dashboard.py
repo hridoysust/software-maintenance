@@ -2,14 +2,14 @@ from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import messagebox
 import time
-import sqlite3
+from database import Database
 import os
 
-from employee import employeeClass
-from supplier import supplierClass
-from category import categoryClass
-from product import productClass
-from sales import salesClass
+from employee import employeeUI
+from supplier import supplierUI
+from category import categoryUI
+from product import productUI
+from sales import salesUI
 
 # ------------------ BASE PATH SETUP ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -25,6 +25,7 @@ class IMS:
         self.root.geometry("1350x700+110+80")
         self.root.resizable(False, False)
         self.root.config(bg="white")
+        self.db = Database()
 
         # ------------- title --------------
         self.icon_title = PhotoImage(file=os.path.join(IMAGE_DIR, "logo1.png"))
@@ -173,46 +174,37 @@ class IMS:
     # -------------- functions ----------------
     def employee(self):
         self.new_win = Toplevel(self.root)
-        self.new_obj = employeeClass(self.new_win)
+        self.new_obj = employeeUI(self.new_win)
 
     def supplier(self):
         self.new_win = Toplevel(self.root)
-        self.new_obj = supplierClass(self.new_win)
-
+        self.new_obj = supplierUI(self.new_win)
     def category(self):
         self.new_win = Toplevel(self.root)
-        self.new_obj = categoryClass(self.new_win)
+        self.new_obj = categoryUI(self.new_win)
 
     def product(self):
         self.new_win = Toplevel(self.root)
-        self.new_obj = productClass(self.new_win)
-
+        self.new_obj = productUI(self.new_win)
     def sales(self):
         self.new_win = Toplevel(self.root)
-        self.new_obj = salesClass(self.new_win)
+        self.new_obj = salesUI(self.new_win)
 
     def update_content(self):
-        con = sqlite3.connect(database=os.path.join(BASE_DIR, 'ims.db'))
-        cur = con.cursor()
-
         try:
-            cur.execute("select * from product")
-            product = cur.fetchall()
+            product = self.db.fetch("SELECT * FROM product")
             self.lbl_product.config(text=f"Total Product\n[ {len(product)} ]")
 
-            cur.execute("select * from category")
-            category = cur.fetchall()
+            category = self.db.fetch("SELECT * FROM category")
             self.lbl_category.config(text=f"Total Category\n[ {len(category)} ]")
 
-            cur.execute("select * from employee")
-            employee = cur.fetchall()
+            employee = self.db.fetch("SELECT * FROM employee")
             self.lbl_employee.config(text=f"Total Employee\n[ {len(employee)} ]")
 
-            cur.execute("select * from supplier")
-            supplier = cur.fetchall()
+            supplier = self.db.fetch("SELECT * FROM supplier")
             self.lbl_supplier.config(text=f"Total Supplier\n[ {len(supplier)} ]")
 
-            bill = len(os.listdir(BILL_DIR))
+            bill = len([f for f in os.listdir(BILL_DIR) if f.endswith(".txt")])
             self.lbl_sales.config(text=f"Total Sales\n[ {bill} ]")
 
             time_ = time.strftime("%I:%M:%S")

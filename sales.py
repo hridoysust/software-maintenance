@@ -1,7 +1,6 @@
 from tkinter import *
 from PIL import Image, ImageTk
 from tkinter import ttk, messagebox
-import sqlite3
 import os
 
 # ------------------ BASE PATH SETUP ------------------
@@ -12,7 +11,7 @@ BILL_DIR = os.path.join(BASE_DIR, "bill")
 os.makedirs(BILL_DIR, exist_ok=True)
 # ---------------------------------------------------
 
-class salesClass:
+class salesUI:
     def __init__(self, root):
         self.root = root
         self.root.geometry("1100x500+320+220")
@@ -20,7 +19,7 @@ class salesClass:
         self.root.resizable(False, False)
         self.root.focus_force()
 
-        self.blll_list = []
+        self.bill_list = []
         self.var_invoice = StringVar()
 
         # --------------- title ---------------------
@@ -94,13 +93,17 @@ class salesClass:
 
     # -------------------------------------------------------
     def show(self):
-        del self.blll_list[:]
+        # Reload available bill files
+        self.bill_list.clear()
         self.Sales_List.delete(0, END)
 
-        for i in os.listdir(BILL_DIR):
-            if i.split('.')[-1] == 'txt':
-                self.Sales_List.insert(END, i)
-                self.blll_list.append(i.split('.')[0])
+        try:
+            for file in os.listdir(BILL_DIR):
+                if file.endswith(".txt"):
+                    self.Sales_List.insert(END, file)
+                    self.bill_list.append(file.split('.')[0])
+        except Exception as ex:
+            messagebox.showerror("Error", f"Error loading bills: {str(ex)}", parent=self.root)
 
     def get_data(self, ev):
         index_ = self.Sales_List.curselection()
@@ -108,33 +111,42 @@ class salesClass:
             return
 
         file_name = self.Sales_List.get(index_)
+        file_path = os.path.join(BILL_DIR, file_name)
+
         self.bill_area.delete('1.0', END)
 
-        file_path = os.path.join(BILL_DIR, file_name)
-        with open(file_path, 'r') as fp:
-            for i in fp:
-                self.bill_area.insert(END, i)
+        try:
+            with open(file_path, 'r') as fp:
+                self.bill_area.insert(END, fp.read())
+        except Exception as ex:
+            messagebox.showerror("Error", f"Error reading file: {str(ex)}", parent=self.root)
 
     def search(self):
-        if self.var_invoice.get() == "":
-            messagebox.showerror("Error", "Invoice no. should be required", parent=self.root)
-        else:
-            if self.var_invoice.get() in self.blll_list:
-                file_path = os.path.join(BILL_DIR, f"{self.var_invoice.get()}.txt")
-                self.bill_area.delete('1.0', END)
+        self.show()
+        invoice = self.var_invoice.get().strip()
 
+        if invoice == "":
+            messagebox.showerror("Error", "Invoice no. is required", parent=self.root)
+            return
+
+        if invoice in self.bill_list:
+            file_path = os.path.join(BILL_DIR, f"{invoice}.txt")
+            self.bill_area.delete('1.0', END)
+
+            try:
                 with open(file_path, 'r') as fp:
-                    for i in fp:
-                        self.bill_area.insert(END, i)
-            else:
-                messagebox.showerror("Error", "Invalid Invoice No.", parent=self.root)
+                    self.bill_area.insert(END, fp.read())
+            except Exception as ex:
+                messagebox.showerror("Error", f"Error reading file: {str(ex)}", parent=self.root)
+        else:
+            messagebox.showerror("Error", "Invalid Invoice No.", parent=self.root)
 
     def clear(self):
-        self.show()
+        self.var_invoice.set("")
         self.bill_area.delete('1.0', END)
 
 
 if __name__ == "__main__":
     root = Tk()
-    obj = salesClass(root)
+    obj = salesUI(root)
     root.mainloop()

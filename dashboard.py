@@ -26,6 +26,15 @@ class IMS:
         self.root.resizable(False, False)
         self.root.config(bg="white")
         self.db = Database()
+        self.LOW_STOCK_THRESHOLD = 5  # Define a threshold for low stock
+        self.low_stock_alert_shown = False
+
+        self.lbl_low_stock = Label(
+            self.root, text="Low Stock\n{ 0 }",
+            bd=5, relief=RIDGE, bg="#e91e63",
+            fg="white", font=("goudy old style", 20, "bold")
+        )
+        self.lbl_low_stock.place(x=1000, y=300, height=150, width=300)
 
         # ------------- title --------------
         self.icon_title = PhotoImage(file=os.path.join(IMAGE_DIR, "logo1.png"))
@@ -179,6 +188,7 @@ class IMS:
     def supplier(self):
         self.new_win = Toplevel(self.root)
         self.new_obj = supplierUI(self.new_win)
+
     def category(self):
         self.new_win = Toplevel(self.root)
         self.new_obj = categoryUI(self.new_win)
@@ -186,6 +196,7 @@ class IMS:
     def product(self):
         self.new_win = Toplevel(self.root)
         self.new_obj = productUI(self.new_win)
+
     def sales(self):
         self.new_win = Toplevel(self.root)
         self.new_obj = salesUI(self.new_win)
@@ -213,6 +224,24 @@ class IMS:
                 text=f"Welcome to Inventory Management System\t\t Date: {date_}\t\t Time: {time_}"
             )
 
+            low_stock = self.db.fetch(
+                "SELECT * FROM product WHERE CAST(qty AS INTEGER) <= ?",
+                (self.LOW_STOCK_THRESHOLD,)
+            )
+            self.lbl_low_stock.config(
+                text=f"Low Stock\n[ {len(low_stock)} ]"
+            )
+
+            if len(low_stock) == 0:
+                self.low_stock_alert_shown = False
+
+            if len(low_stock) > 0 and not self.low_stock_alert_shown:
+                self.low_stock_alert_shown = True
+                self.root.after(1000, lambda: messagebox.showwarning(
+                    "Low Stock Alert",
+                    f"{len(low_stock)} products are low in stock!"
+                ))
+                
             self.lbl_clock.after(200, self.update_content)
 
         except Exception as ex:

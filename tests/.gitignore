@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Test database
+test.db
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Virtual environment (if any)
+venv/
+env/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp

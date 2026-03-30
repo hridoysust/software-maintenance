@@ -8,15 +8,19 @@ class Database:
         return sqlite3.connect(self.db_name)
 
     def execute(self, query, params=()):
-        with self.connect() as conn:
+        conn = self.connect()
+        try:
             cur = conn.cursor()
             cur.execute(query, params)
             conn.commit()
+        finally:
+            conn.close()
 
     def fetch(self, query, params=()):
         conn = self.connect()
-        cur = conn.cursor()
-        cur.execute(query, params)
-        data = cur.fetchall()
-        conn.close()
-        return data
+        try:
+            cur = conn.cursor()
+            cur.execute(query, params)
+            return cur.fetchall()
+        finally:
+            conn.close()
